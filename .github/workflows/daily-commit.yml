@@ -1,0 +1,25 @@
+name: Daily Commit
+
+on:
+  schedule:
+    # 每天 UTC 时间 01:00 执行（北京时间 09:00）
+    - cron: '0 1 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update activity log
+        run: |
+          echo "$(date '+%Y-%m-%d %H:%M:%S') - daily update" >> activity.log
+          
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add activity.log
+          git commit -m "Daily update: $(date '+%Y-%m-%d')"
+          git push
