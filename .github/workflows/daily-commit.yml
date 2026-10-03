@@ -2,24 +2,67 @@ name: Daily Commit
 
 on:
   schedule:
-    # 每天 UTC 时间 01:00 执行（北京时间 09:00）
-    - cron: '0 1 * * *'
-  workflow_dispatch:  # 允许手动触发
+    # UTC 01:37 = 北京时间 09:37；实际运行可能延迟。
+    - cron: '37 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-commit
+  cancel-in-progress: false
 
 jobs:
   commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TZ: Asia/Shanghai
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Update activity log
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update activity log and push
+        shell: bash
         run: |
-          echo "$(date '+%Y-%m-%d %H:%M:%S') - daily update" >> activity.log
-          
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add activity.log
+          set -euo pipefail
+
+          git config --local user.name "PhysicsZhang"
+          git config --local user.email "69517729+PhysicsZhang@users.noreply.github.com"
+
+          printf '%s - daily update\n' "$(date '+%Y-%m-%d %H:%M:%S %z')" >> activity.log
+
+          git add -- activity.log
           git commit -m "Daily update: $(date '+%Y-%m-%d')"
-          git push
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+# name: Daily Commit
+
+# on:
+#   schedule:
+#     # 每天 UTC 时间 01:00 执行（北京时间 09:00）
+#     - cron: '0 1 * * *'
+#   workflow_dispatch:  # 允许手动触发
+
+# jobs:
+#   commit:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+      
+#       - name: Update activity log
+#         run: |
+#           echo "$(date '+%Y-%m-%d %H:%M:%S') - daily update" >> activity.log
+          
+#       - name: Commit and push
+#         run: |
+#           git config --local user.name "PhysicsZhang"
+#           git config --local user.email "69517729+PhysicsZhang@users.noreply.github.com"
+#           git add activity.log
+#           git commit -m "Daily update: $(date '+%Y-%m-%d')"
+#           git push
